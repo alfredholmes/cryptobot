@@ -1,4 +1,4 @@
-import requests, json
+import requests, json, calendar, time
 
 class Miner:
 	def cost(alg):
@@ -27,13 +27,15 @@ class Nicehash(Miner):
 		self.api_id = api_id
 		self.api_key = api_key
 		self.pools = pools
+		
 		r = json.loads(requests.get('https://www.nicehash.com/api?method=buy.info').text)['result']['algorithms']
 		self.alg_data = {}
 		for i in r:
 			prefix = {'H': 10*0, 'kH': 10**3, 'mH': 10**6, 'gH': 10**9, 'tH': 10**12, 'pH': 10**15, 'KH': 10**3, 'MH': 10**6, 'GH': 10**9, 'TH': 10**12, 'PH': 10**15, 'kSol': 10**3, 'KSol': 10**3}
 
 			self.alg_data[int(i['algo'])] = { 'name': i['name'], 'prefix': prefix[i['speed_text']]}
-
+		self.orders = {}
+		self.getOrders(True)
 
 
 	def cost(self, alg):
@@ -49,6 +51,39 @@ class Nicehash(Miner):
 		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.create&id=' + str(self.api_id) + '&key=' + str(self.api_key) + '&location=0&algo=' + str(alg) + '&amount=' + str(size) +'&price=' + str(price) + '&limit=' + str(speed) + '&pool_host=' + self.pools[pool]['host'] + '&pool_port=' + str(self.pools[pool]['port']) + '&pool_user=' + self.pools[pool]['user'] + '&pool_pass=' + self.pools[pool]['password']).text)
 		print(r)
 
-	def getOrders():
-		pass
+	def getOrders(self, refresh):
+
+
+		if refresh == True:
+			print('Refreshing Nicehash orders')
+			for i in range(0, 25):
+				o = json.loads(requests.get('https://www.nicehash.com/api?method=orders.get&my&id=' + self.api_id + '&key=' + self.api_key + '&location=0&algo=' + str(i)).text)['result']['orders']
+				for x in o:
+					if x['id'] in self.orders:
+						#print(x['id'])
+						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': self.orders[i]['last_decrease'], 'algo': str(i), 'speed': x['accepted_speed']}
+					else:
+						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': 0, 'algo': str(i), 'speed': x['accepted_speed']}
+		return self.orders
+
+	def decreaseOrder(self, oid):
+		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.set.price.decrease&id=' + self.api_id + '&key=' + self.api_key +'&location=0&algo=' + self.orders[oid]['algo'] + '&order=' + str(oid)).text)['result']
+		return 'success' in r
+
+	def increaseOrder(self, oid, price):
+		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.set.price&id=' + self.api_id + '&key=' + self.api_key + '&algo=' + self.orders[oid] + '&location=0&order=' + str(oid) + '&price=' +str(price)).text)
+
+	def createOrder(self, algo, currency, price, btcamount, speed):
+		pool = self.pools[algo][currency]
+		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.create&id=' + self.api_id +'&key=' + self.api_key + '&location=0&algo=' + str(algo) + '&amount=' + str(btcamount) + '&price=' + str(price) + '&limit=' + str(speed) + '&pool_host=' + pool['host'] + '&pool_port=' + pool['port'] + '&pool_user=' + pool['user'] + '&pool_pass=' + pool['pass']).text)['result']
+		return 'success' in r
+
+	def getAccountBalance(self):
+		r = json.loads(requests.get('https://www.nicehash.com/api?method=balance&id=' + self.api_id + '&key=' + self.api_key).text)['result']['balance_confirmed']
+		return float(r)
+
+	def getAmountInOrders(self):
+		total = 0.0
+		for order in self.orders:
+			total = total + float(order['btc_remaining'])
  

@@ -1,0 +1,30 @@
+pools = {
+#	alg: {'currency': { host': 'https://www.pool.org' 'port': '666', 'user': 'x' 'pass': 'x'}}
+#	reccomend first configuring on nicehash to ensure connection
+	 0: {},
+	 1: {},
+	 2: {},
+	 3: {},
+	 4: {},
+	 5: {},
+	 6: {},
+	 7: {},
+	 8: {},
+	 9: {},
+	10: {},
+	11: {},
+	12: {},
+	13: {},
+	14: {},
+	15: {},
+	16: {},
+	17: {},
+	18: {},
+	19: {},
+	20: {},
+	21: {},
+	22: {},
+	23: {},
+	24: {},
+
+}
