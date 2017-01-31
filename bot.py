@@ -9,15 +9,15 @@ def getProfitRatioP(price, currency, miner):
 	speed = (price * 1.03)**(-1)
 	return currency.miningcalculator(speed, 24*60*60) * exchange.getBTCRate(currency.name)
 
-def sort(data):
-	pivot = len(data) / 2
+
+#to do make main function smaller functions
 
 
 def main():
 	#try:
 	#initialise nicehash connection
+	
 	nh = miners.Nicehash('xxx', 'xxx', pools.pools)
-	#nh = miners.Nicehash('xxx', 'xxx', pools.pools)
 	balance = nh.getAccountBalance()
 	minimumProfitRatio = 1.2
 
@@ -42,14 +42,32 @@ def main():
 
 		#to do currency matching in profit equations
 		for i in orders.items():
-			#print(i)
-			if float(i[1]['price']) > nh.cost(int(i[1]['alg'])) * nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.getDecreaseAmount(int(i[1]['alg'])) * nh.alg_data[int(i[1]['alg'])]['prefix']:
+			
+			alg = int(i[1]['alg'])
+			prefix = float(nh.alg_data[alg]['prefix'])
+			price = float(i[1]['price'])
+			nhPrice = nh.cost(alg) * prefix
+			decrease = nh.getDecreaseAmount(alg) * prefix
+
+			pool = i[1]['pool']
+
+			c = ''
+
+			for x in pools.pools[alg].items():
+				if x[1]['host'] == pool:
+					c = x[0]
+			for x in currencies:
+				if x.name == c:
+					c = x
+
+			if price < nhPrice and getProfitRatioP((nhPrice + decrease) / prefix, c, nh) > minimumProfitRatio:
+				print('Increasing order ' + str(i[0]))
+				nh.increaseOrder(i[0], nhPrice + decrease)
+			
+			if price > nhPrice + decrease * 2:
+				print('Decreasing order ' + str(i[0]))
 				nh.decreaseOrder(i[0])
-				print('Decreasing order: ' + str(i[0]) + ' by ' + str(nh.alg_data[int(i[1]['alg'])]['decrease_amount']))
-			if float(i[1]['price']) < nh.cost(int(i[1]['alg'])):
-				if getProfitRatioP(nh.cost(int(i[1]['alg'])) + nh.getDecreaseAmount(int(i[1]['alg'])), list(pools[int(i[1]['alg'])])[0], nh) > minimumProfitRatio:
-					nh.increaseOrder(self, x, nh.cost((int(i[1]['alg'])) + nh.getDecreaseAmount(int(i[1]['alg']))) * nh.alg_data[int(i[1]['alg'])]['prefix'])
-					print('Increasing order' + str(i[0]) + ' to ' + str(nh.cost(int(i[1]['alg'])) / nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.alg_data[int(i[1]['alg'])]['decrease_amount']))
+
 			#check if order still profitable
 
 		#get prices for the algrithms
@@ -75,10 +93,11 @@ def main():
 			
 
 		for i in profits.items():
-			if balance >= 0.0:
+			if balance >= 0.01:
 				openOrder = False
 				for o in orders.items():
 					if int(o[1]['alg']) == int(i[1].alg):
+						
 						openOrder = True
 				if openOrder == False:
 					orderTotal = 0

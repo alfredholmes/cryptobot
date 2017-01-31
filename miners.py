@@ -57,9 +57,9 @@ class Nicehash(Miner):
 				for x in o:
 					if x['id'] in self.orders:
 						
-						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': self.orders[int(x['id'])]['last_decrease'], 'alg': str(i), 'speed': x['accepted_speed']}
+						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': self.orders[int(x['id'])]['last_decrease'], 'alg': str(i), 'speed': x['accepted_speed'], 'pool': x['pool_host']}
 					else:
-						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': 0, 'alg': str(i), 'speed': x['accepted_speed']}
+						self.orders[int(x['id'])] = {'price': x['price'], 'btc_remaining': x['btc_avail'], 'btc_spent': x['btc_paid'] , 'last_decrease': 0, 'alg': str(i), 'speed': x['accepted_speed'], 'pool': x['pool_host']}
 		return self.orders
 
 	def getDecreaseAmount(self, alg):
@@ -75,7 +75,7 @@ class Nicehash(Miner):
 			return False
 
 	def increaseOrder(self, oid, price):
-		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.set.price&id=' + self.api_id + '&key=' + self.api_key + '&algo=' + self.orders[oid] + '&location=0&order=' + str(oid) + '&price=' +str(price)).text)
+		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.set.price&id=' + self.api_id + '&key=' + self.api_key + '&algo=' + str(self.orders[oid]['alg']) + '&location=0&order=' + str(oid) + '&price=' +str(price)).text)
 
 	def createOrder(self, algo, currency, price, btcamount, speed):
 		pool = self.pools[algo][currency]
