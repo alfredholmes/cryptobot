@@ -72,7 +72,7 @@ class Nicehash(Miner):
 				self.orders[oid]['last_decrease'] = calendar.timegm(time.gmtime())
 			return 'success' in r
 		else:
-			return false
+			return False
 
 	def increaseOrder(self, oid, price):
 		r = json.loads(requests.get('https://www.nicehash.com/api?method=orders.set.price&id=' + self.api_id + '&key=' + self.api_key + '&algo=' + self.orders[oid] + '&location=0&order=' + str(oid) + '&price=' +str(price)).text)

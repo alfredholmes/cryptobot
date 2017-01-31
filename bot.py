@@ -17,6 +17,7 @@ def main():
 	#try:
 	#initialise nicehash connection
 	nh = miners.Nicehash('xxx', 'xxx', pools.pools)
+	#nh = miners.Nicehash('xxx', 'xxx', pools.pools)
 	balance = nh.getAccountBalance()
 	minimumProfitRatio = 1.2
 
@@ -28,53 +29,58 @@ def main():
 	currencies = [currency.Zec(), currency.Eth(), currency.Etc(), currency.Xmr()]
 
 	while True:
-		print('Current Orders:')
-		orders = nh.getOrders(False)
+		
+		orders = nh.getOrders(True)
+		if len(orders) > 0:
+			print('Current Orders:')
+		
 		for i in orders.items():
 			print('Order id: ' + str(i[0]))
 			print(i[1])
-		print('')
+		
 
 
 		#to do currency matching in profit equations
 		for i in orders.items():
 			#print(i)
-			if float(i[1]['price']) > nh.cost(int(i[1]['alg'])) / nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.alg_data[int(i[1]['alg'])]['decrease_amount']:
+			if float(i[1]['price']) > nh.cost(int(i[1]['alg'])) * nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.getDecreaseAmount(int(i[1]['alg'])) * nh.alg_data[int(i[1]['alg'])]['prefix']:
 				nh.decreaseOrder(i[0])
 				print('Decreasing order: ' + str(i[0]) + ' by ' + str(nh.alg_data[int(i[1]['alg'])]['decrease_amount']))
 			if float(i[1]['price']) < nh.cost(int(i[1]['alg'])):
-				if getProfitRatioP(nh.cost(int(i[1]['alg'])) + nh.alg_data[int(i[1]['alg'])]['prefix'] * nh.alg_data[int(i[1]['alg'])]['decrease_amount'], pools[int(i[1]['alg'])][0], nh) > minimumProfitRatio:
-					nh.increaseOrder(self, x, nh.cost(int(i[1]['alg'])) / nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.alg_data[int(i[1]['alg'])]['decrease_amount'])
+				if getProfitRatioP(nh.cost(int(i[1]['alg'])) + nh.getDecreaseAmount(int(i[1]['alg'])), list(pools[int(i[1]['alg'])])[0], nh) > minimumProfitRatio:
+					nh.increaseOrder(self, x, nh.cost((int(i[1]['alg'])) + nh.getDecreaseAmount(int(i[1]['alg']))) * nh.alg_data[int(i[1]['alg'])]['prefix'])
 					print('Increasing order' + str(i[0]) + ' to ' + str(nh.cost(int(i[1]['alg'])) / nh.alg_data[int(i[1]['alg'])]['prefix'] + nh.alg_data[int(i[1]['alg'])]['decrease_amount']))
-		
+			#check if order still profitable
 
 		#get prices for the algrithms
 		initialprofits = {}
 		prices = []
 
 		for i in currencies:
-			prices.append(getProfitRatio(i, nh))
-			initialprofits[getProfitRatio(i, nh)] = i
+			prices.append(round(getProfitRatio(i, nh), 5))
+			initialprofits[round(getProfitRatio(i, nh), 5)] = i
 		
 		#create an orderedDict of rate: currency with the best rate at the start 
 		prices.sort(reverse=True)
 		profits = collections.OrderedDict()
 		
-
+		print(prices)
 
 		for rate in prices:
 			if rate > minimumProfitRatio:
 				profits[rate] = initialprofits[rate]
 
 		#print(profits)
-		
+	
+			
+
 		for i in profits.items():
-			if balance > 0.01:
+			if balance >= 0.0:
 				openOrder = False
 				for o in orders.items():
 					if int(o[1]['alg']) == int(i[1].alg):
 						openOrder = True
-				if not openOrder:
+				if openOrder == False:
 					orderTotal = 0
 					if balance / n_orders > 0.01:
 						orderTotal = balance / n_orders
@@ -89,7 +95,7 @@ def main():
 						print('failed to create order')
 
 		#delay for 30 seconds
-		print('Waiting 30 seconds...')
+		print('Waiting ' + str(refresh_time) + ' seconds...')
 		time.sleep(refresh_time)
 	#except:
 		#pass
