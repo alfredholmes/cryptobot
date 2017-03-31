@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, exchange
 
 class Currency:
 	def __init__(self, difficulty, block_reward, name, alg):
@@ -7,8 +7,25 @@ class Currency:
 		self.name = name
 		self.alg
 
-	def miningcalculator(self, speed, time):
+	def miningCalculator(self, speed, time):
 		return (speed / self.difficulty) * time * self.block_reward
+
+	def btcRate(self):
+		return exchange.getBTCRate(self.name)
+
+	def currencyFromStr(str):
+		if(str == 'eth'):
+			return Eth()
+		if(str == 'etc'):
+			return Etc()
+		if(str == 'zec'):
+			return Zec()
+		if(str == 'zcl'):
+			return Zec()
+		if(str == 'dash'):
+			return Dash()
+		if(str == 'xmr'):
+			return Xmr()
 
 
 
@@ -27,7 +44,7 @@ class Etc(Currency):
 		self.name = 'etc'
 		self.alg = 20
 
-	def miningcalculator(self, speed, time):
+	def miningCalculator(self, speed, time):
 		return (speed / self.network_rate) * self.block_reward * time / self.blocktime	
 
 
@@ -40,7 +57,7 @@ class Zec(Currency):
 		self.name = 'zec'
 		self.alg = 24
 	
-	def miningcalculator(self, speed, time):
+	def miningCalculator(self, speed, time):
 		return (speed / self.network_rate) * self.block_reward * time / self.blocktime
 
 class Zcl(Currency):
@@ -52,24 +69,16 @@ class Zcl(Currency):
 		self.name = 'zcl'
 		self.alg = 24
 
-	def miningcalculator(self, speed, time):
+	def miningCalculator(self, speed, time):
 		return (speed / self.network_rate) * self.block_reward * time / self.blocktime
 
-class Dash(Currency):
-	def __init__(self):
-		r = json.loads(requests.get('http://chainradar.com/api/v1/bcn/status').text)
-		self.network_rate = r['instantHashrate']
-		self.blocktime = 216
-		self.block_reward = 1.94
-		self.name = 'dash'
-		self.alg = 3
 
-	def miningcalculator(self, speed, time):
-		return (speed / self.network_rate) * self.block_reward * time / self.blocktime
+
 
 class Xmr(Currency):
 	def __init__(self):
 		self.difficulty = float(json.loads(requests.get('http://moneroblocks.info/api/get_stats/').text)['difficulty'])
+		#self.difficulty = 10**15
 		self.block_reward = 8.82
 		self.name = 'xmr'
 		self.alg = 22

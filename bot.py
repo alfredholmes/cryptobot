@@ -3,20 +3,20 @@ import miners, exchange, currency, pools, collections, time
 
 def getProfitRatio(currency, miner):
 	speed = ((miner.cost(currency.alg) + miner.getDecreaseAmount(currency.alg)) * 1.03)**(-1)
-	return currency.miningcalculator(speed, 24*60*60) * exchange.getBTCRate(currency.name)
+	return currency.miningCalculator(speed, 24*60*60) * exchange.getBTCRate(currency.name)
 
 def getProfitRatioP(price, currency, miner):
 	speed = (price * 1.03)**(-1)
-	return currency.miningcalculator(speed, 24*60*60) * exchange.getBTCRate(currency.name)
+	return currency.miningCalculator(speed, 24*60*60) * exchange.getBTCRate(currency.name)
 
 
-#to do make main function smaller functions
+
 
 
 def main():
 	#try:
 	#initialise nicehash connection
-	
+
 
 	minimumProfitRatio = 1.2
 
@@ -29,24 +29,27 @@ def main():
 
 	while True:
 		try:
-			nh = miners.Nicehash('xxx', 'xxx', pools.pools)
+
+			nh = miners.Nicehash('83980', '8be1ac20-7d09-400b-9bd8-f6625bf517e3', pools.pools)
 			balance = nh.getAccountBalance()
 			orders = nh.getOrders(False)
 			if len(orders) > 0:
 				print('Current Orders:')
-			
+
 			for i in orders.items():
 				print('Order id: ' + str(i[0]))
 				print(i[1])
-			
+
+
 
 
 			#to do currency matching in profit equations
 			for i in orders.items():
-				
+
 				alg = int(i[1]['alg'])
 				prefix = float(nh.alg_data[alg]['prefix'])
 				price = float(i[1]['price'])
+				remaining = float(i[1]['btc_remaining'])
 				nhPrice = nh.cost(alg) * prefix
 				decrease = nh.getDecreaseAmount(alg) * prefix
 
@@ -61,13 +64,15 @@ def main():
 					if x.name == c:
 						c = x
 
-				if price < nhPrice and getProfitRatioP((nhPrice + decrease) / prefix, c, nh) > minimumProfitRatio:
+				if price < nhPrice + decrease and getProfitRatioP((nhPrice + decrease) / prefix, c, nh) > minimumProfitRatio:
 					print('Increasing order ' + str(i[0]))
 					nh.increaseOrder(i[0], nhPrice + decrease)
-				
-				if price > nhPrice + decrease * 1:
+
+				if price > nhPrice + decrease:
 					print('Decreasing order ' + str(i[0]))
 					nh.decreaseOrder(i[0])
+
+				#if()
 
 				#check if order still profitable
 
@@ -78,11 +83,11 @@ def main():
 			for i in currencies:
 				prices.append(round(getProfitRatio(i, nh), 5))
 				initialprofits[round(getProfitRatio(i, nh), 5)] = i
-			
-			#create an orderedDict of rate: currency with the best rate at the start 
+
+			#create an orderedDict of rate: currency with the best rate at the start
 			prices.sort(reverse=True)
 			profits = collections.OrderedDict()
-			
+
 			print(prices)
 
 			for rate in prices:
@@ -90,15 +95,16 @@ def main():
 					profits[rate] = initialprofits[rate]
 
 			#print(profits)
-		
-				
+
+
 
 			for i in profits.items():
+				print(balance)
 				if balance >= 0.01:
 					openOrder = False
 					for o in orders.items():
 						if int(o[1]['alg']) == int(i[1].alg):
-							
+
 							openOrder = True
 					if openOrder == False:
 						orderTotal = 0
@@ -113,13 +119,13 @@ def main():
 							print('creating order for ' + i[1].name + ' with speed: ' + str(speed) + ' and value: ' + str(orderTotal))
 						else:
 							print('failed to create order')
-
-			#delay for 30 seconds
-			print('Waiting ' + str(refresh_time) + ' seconds...')
-			time.sleep(refresh_time)
 		except:
 			pass
-	
+		#delay for 30 seconds
+		print('Waiting ' + str(refresh_time) + ' seconds...')
+		time.sleep(refresh_time)
+
+
 
 
 
